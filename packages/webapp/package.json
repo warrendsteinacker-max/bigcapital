@@ -7,7 +7,7 @@
     "@bigcapital/pdf-templates": "workspace:*",
     "@bigcapital/sdk-ts": "workspace:*",
     "@bigcapital/utils": "workspace:*",
-    "openapi-typescript-fetch": "^1.1.3",  //
+    "openapi-typescript-fetch": "^1.1.3",  
     "@blueprintjs-formik/core": "^0.3.8",
     "@blueprintjs-formik/datetime": "^0.4.1",
     "@blueprintjs-formik/select": "^0.4.9",
