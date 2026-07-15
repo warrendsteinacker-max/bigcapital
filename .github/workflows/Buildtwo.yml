@@ -1,74 +1,74 @@
-name: Build and Deploy Develop Docker Container
+name: Deploy Webapp to Pages & Publish Server Container
 
 on:
   push:
     branches:
       - develop
 
-# Grants GitHub the permissions to write packages to your repo's built-in registry
+# Grants GitHub the permissions to write packages (for server container) AND deploy to GitHub Pages
 permissions:
   contents: read
   packages: write
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment to Pages
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
 env:
   REGISTRY: ghcr.io
-  # These will automatically point to your GitHub packages page: ghcr.io/username/webapp and server
-  WEBAPP_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/webapp
   SERVER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/server
 
 jobs:
-  build-publish-webapp:
-    name: Build and deploy webapp container
+  # JOB 1: Build the Webapp and Deploy it to GitHub Pages
+  deploy-webapp-pages:
+    name: Build and deploy webapp to GitHub Pages
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Logs in using GitHub's built-in temporary token automatically
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - name: Install pnpm
+        uses: pnpm/action-setup@v3
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          version: 9 # Matches your pnpm workspace
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
         with:
-          images: ${{ env.WEBAPP_IMAGE_NAME }}
-          tags: |
-            type=raw,value=develop
+          node-version: 20
+          cache: 'pnpm'
 
-      # Builds and pushes the Webapp image using the monorepo root as context
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        id: build
+      # Installs all workspace dependencies (root + shared + webapp)
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Configures Vite's base path to match your GitHub Pages repository URL
+      # If your repo is "https://github.com/username/my-repo", the base needs to be "/my-repo/"
+      - name: Build Webapp with Vite
+        run: pnpm --filter @bigcapital/webapp run build
+        env:
+          VITE_BASE_URL: /${{ github.event.repository.name }}/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      # Vite outputs the production-ready build files to 'packages/webapp/dist'
+      - name: Upload static website artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          context: .
-          file: ./packages/webapp/Dockerfile
-          platforms: linux/amd64
-          push: true
-          labels: ${{ steps.meta.outputs.labels }}
-          tags: ${{ steps.meta.outputs.tags }}
+          path: './packages/webapp/dist'
 
-      - name: Export digest
-        run: |
-          mkdir -p /tmp/digests
-          digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
-      - name: Upload digest
-        uses: actions/upload-artifact@v4
-        with:
-          name: digests-webapp
-          path: /tmp/digests/*
-          if-no-files-found: error
-          retention-days: 1
-
+  # JOB 2: Build and push the Server backend container (no changes here, keeps working perfectly!)
   build-publish-server:
     name: Build and deploy server container
     runs-on: ubuntu-latest
@@ -79,7 +79,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Logs in using GitHub's built-in temporary token automatically
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -95,7 +94,6 @@ jobs:
           tags: |
             type=raw,value=develop
 
-      # Builds and pushes the Server image using the monorepo root as context
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         id: build
