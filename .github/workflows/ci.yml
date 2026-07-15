@@ -1,0 +1,54 @@
+name: CI / Build Webapp
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository (including sibling monorepo workspaces)
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20' # Matches the @types/node version in your package.json
+          cache: 'yarn'      # Configures caching for dependencies (change to 'pnpm' or 'npm' if applicable)
+
+      # Step 3: Install all monorepo dependencies from root
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # Step 4: Run Prettier formatting check
+      - name: Check code formatting
+        run: yarn workspace @bigcapital/webapp format:check
+
+      # Step 5: Run TypeScript type verification
+      - name: Run TypeScript compiler check
+        run: yarn workspace @bigcapital/webapp typecheck
+
+      # Step 6: Run tests
+      - name: Run unit tests
+        run: yarn workspace @bigcapital/webapp test
+        env:
+          CI: true
+
+      # Step 7: Build production assets using Vite
+      - name: Build Webapp
+        run: yarn workspace @bigcapital/webapp build
+        env:
+          NODE_ENV: production
+
+      # Step 8: (Optional) Upload build artifacts
+      - name: Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: webapp-production-build
+          path: webapp/dist # Vite outputs
