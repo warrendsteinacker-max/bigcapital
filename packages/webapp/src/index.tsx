@@ -1,4 +1,4 @@
-// @ts-nocheck
+///// @ts-nocheck
 import 'regenerator-runtime/runtime';
 import './wdyr';
 import React from 'react';
