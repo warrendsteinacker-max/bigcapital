@@ -48,9 +48,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile --ignore-scripts
 
-      # Configures Vite's base path to match your GitHub Pages repository URL
-      - name: Build Webapp with Vite
-        run: pnpm --filter @bigcapital/webapp run build
+      # Uses the root monorepo build script to build the dependency packages and compile the webapp
+      - name: Build Webapp with dependency chain
+        run: pnpm run build:webapp
         env:
           VITE_BASE_URL: /${{ github.event.repository.name }}/
 
