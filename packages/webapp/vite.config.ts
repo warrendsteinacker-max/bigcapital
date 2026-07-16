@@ -30,6 +30,10 @@ export default defineConfig(({ mode }) => {
   ];
 
   return {
+    // 1. ADD THIS LINE: Sets the base path for your asset URLs on GitHub Pages
+    // If you are using a custom domain later, you can fall back to '/'
+    base: mode === 'production' ? '/bigcapital/' : '/',
+
     plugins,
     root: rootDir,
     resolve: {
@@ -42,7 +46,7 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.env': {
         NODE_ENV: mode,
-        PUBLIC_URL: clientEnv.PUBLIC_URL ?? '/',
+        PUBLIC_URL: clientEnv.PUBLIC_URL ?? '/bigcapital/', // 2. Update this to match
         ...clientEnv,
       },
     },
