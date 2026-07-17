@@ -1,16 +1,16 @@
 // @ts-nocheck
-import React from 'react';
-import axios from 'axios';
 import { createApiFetcher } from '@bigcapital/sdk-ts';
+import axios from 'axios';
+import React from 'react';
+import { getCookie, normalizeApiPath } from '../utils';
 import {
   useAuthActions,
   useAuthOrganizationId,
   useSetGlobalErrors,
   useAuthToken,
 } from './state';
-import type { ApiError } from 'openapi-typescript-fetch';
 import { useApiFetcherOnError } from './useApiFetcherOnError';
-import { getCookie, normalizeApiPath } from '../utils';
+import type { ApiError } from 'openapi-typescript-fetch';
 
 export default function useApiRequest() {
   const setGlobalErrors = useSetGlobalErrors();
@@ -156,7 +156,7 @@ export function useApiFetcher(options?: {
       baseUrl: '',
       init: { headers },
       disableCamelCaseTransform: !options?.enableCamelCaseTransform,
-      onError,
+      // onError,
     });
   }, [
     token,

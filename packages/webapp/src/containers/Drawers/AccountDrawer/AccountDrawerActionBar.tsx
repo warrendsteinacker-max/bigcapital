@@ -1,5 +1,3 @@
-// @ts-nocheck
-import React from 'react';
 import {
   Button,
   Classes,
@@ -12,23 +10,31 @@ import {
   PopoverInteractionKind,
   Position,
 } from '@blueprintjs/core';
+import React from 'react';
+import { useAccountDrawerContext } from './AccountDrawerProvider';
 import {
   Icon,
   Can,
   FormattedMessage as T,
   DrawerActionsBar,
 } from '@/components';
-
+import { CLASSES } from '@/constants';
 import { AccountAction, AbilitySubject } from '@/constants/abilityOption';
 import { DialogsName } from '@/constants/dialogs';
-
-import { withDialogActions } from '@/containers/Dialog/withDialogActions';
-import { withAlertActions } from '@/containers/Alert/withAlertActions';
-
+import {
+  withAlertActions,
+  WithAlertActionsProps,
+} from '@/containers/Alert/withAlertActions';
+import {
+  withDialogActions,
+  WithDialogActionsProps,
+} from '@/containers/Dialog/withDialogActions';
 import { AccountDialogAction } from '@/containers/Dialogs/AccountDialog/utils';
-import { useAccountDrawerContext } from './AccountDrawerProvider';
 import { compose, safeCallback } from '@/utils';
-import { CLASSES } from '@/constants';
+
+interface AccountDrawerActionBarInnerProps
+  extends WithDialogActionsProps,
+    WithAlertActionsProps {}
 
 /**
  * Account drawer action bar.
@@ -39,9 +45,13 @@ function AccountDrawerActionBarInner({
 
   // #withAlertsDialog
   openAlert,
-}) {
+}: AccountDrawerActionBarInnerProps) {
   // Account drawer context.
   const { account } = useAccountDrawerContext();
+
+  if (!account) {
+    return null;
+  }
 
   // Handle new child button click.
   const onNewChildAccount = () => {

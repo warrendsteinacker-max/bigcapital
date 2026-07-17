@@ -1,16 +1,18 @@
-// @ts-nocheck
-import React from 'react';
 import { isEmpty } from 'lodash';
-
-import { Icon, DetailsMenu, DetailItem } from '@/components';
-import { useAccountDrawerContext } from './AccountDrawerProvider';
+import React from 'react';
 import intl from 'react-intl-universal';
+import { useAccountDrawerContext } from './AccountDrawerProvider';
+import { Icon, DetailsMenu, DetailItem } from '@/components';
 
 /**
  *  Account drawer header.
  */
 export function AccountDrawerHeader() {
   const { account } = useAccountDrawerContext();
+
+  if (!account) {
+    return null;
+  }
 
   return (
     <div className={'account-drawer__content-header'}>
@@ -19,7 +21,7 @@ export function AccountDrawerHeader() {
           name={'closing-balance'}
           label={intl.get('closing_balance')}
         >
-          <h3 class={'big-number'}>{account?.formattedAmount}</h3>
+          <h3 className={'big-number'}>{account?.formattedAmount}</h3>
         </DetailItem>
 
         <DetailItem name={'account-type'} label={intl.get('account_type')}>

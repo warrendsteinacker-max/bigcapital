@@ -1,7 +1,5 @@
-// @ts-nocheck
-import intl from 'react-intl-universal';
 import React from 'react';
-
+import intl from 'react-intl-universal';
 import { useAccountDrawerTableOptionsContext } from './AccountDrawerTableOptionsProvider';
 
 /**

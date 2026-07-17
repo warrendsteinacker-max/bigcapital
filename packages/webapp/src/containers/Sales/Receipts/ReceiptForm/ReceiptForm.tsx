@@ -1,31 +1,24 @@
-// @ts-nocheck
-import intl from 'react-intl-universal';
-import { Formik, Form } from 'formik';
 import { Intent } from '@blueprintjs/core';
-import { sumBy, isEmpty } from 'lodash';
-import { useHistory } from 'react-router-dom';
 import { css } from '@emotion/css';
-
+import { Formik, Form, FormikHelpers } from 'formik';
+import { sumBy, isEmpty } from 'lodash';
+import intl from 'react-intl-universal';
+import { useHistory } from 'react-router-dom';
+import {
+  ReceiptSyncAutoExRateToForm,
+  ReceiptSyncIncrementSettingsToForm,
+} from './components';
 import {
   EditReceiptFormSchema,
   CreateReceiptFormSchema,
 } from './ReceiptForm.schema';
-
-import { useReceiptFormContext } from './ReceiptFormProvider';
-
-import { ReceiptFormHeader as ReceiptFromHeader } from './ReceiptFormHeader';
-import { ReceiptItemsEntriesEditor } from './ReceiptItemsEntriesEditor';
+import { ReceiptFormDialogs } from './ReceiptFormDialogs';
 import { ReceiptFormFloatingActions } from './ReceiptFormFloatingActions';
 import { ReceiptFormFooter } from './ReceiptFormFooter';
-import { ReceiptFormDialogs } from './ReceiptFormDialogs';
+import { ReceiptFormHeader as ReceiptFromHeader } from './ReceiptFormHeader';
+import { useReceiptFormContext } from './ReceiptFormProvider';
 import { ReceiptFormTopBar } from './ReceiptFormTopbar';
-
-import { withDashboardActions } from '@/containers/Dashboard/withDashboardActions';
-import { withSettings } from '@/containers/Settings/withSettings';
-
-import { AppToaster } from '@/components';
-import { compose, orderingLinesIndexes, transactionNumber } from '@/utils';
-import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { ReceiptItemsEntriesEditor } from './ReceiptItemsEntriesEditor';
 import {
   transformToEditForm,
   defaultReceipt,
@@ -33,11 +26,22 @@ import {
   transformFormValuesToRequest,
   resetFormState,
 } from './utils';
-import {
-  ReceiptSyncAutoExRateToForm,
-  ReceiptSyncIncrementSettingsToForm,
-} from './components';
+import type { ReceiptFormValues } from './utils';
+import { AppToaster } from '@/components';
 import { PageForm } from '@/components/PageForm';
+import { withDashboardActions } from '@/containers/Dashboard/withDashboardActions';
+import { withSettings } from '@/containers/Settings/withSettings';
+import { useCurrentOrganizationBaseCurrency } from '@/hooks/query';
+import { compose, orderingLinesIndexes, transactionNumber } from '@/utils';
+
+type ReceiptFormRootProps = {
+  receiptNextNumber?: number;
+  receiptNumberPrefix?: string;
+  receiptAutoIncrement?: boolean;
+  receiptTermsConditions?: string;
+  receiptMessage?: string;
+  preferredDepositAccount?: string;
+};
 
 /**
  * Receipt form.
@@ -50,7 +54,7 @@ function ReceiptFormRoot({
   receiptTermsConditions,
   receiptMessage,
   preferredDepositAccount,
-}) {
+}: ReceiptFormRootProps) {
   const baseCurrency = useCurrentOrganizationBaseCurrency();
 
   const history = useHistory();
@@ -71,31 +75,31 @@ function ReceiptFormRoot({
     receiptNextNumber,
   );
   // Initial values in create and edit mode.
-  const initialValues = {
-    ...(!isEmpty(receipt)
-      ? { ...transformToEditForm(receipt) }
-      : {
-          ...defaultReceipt,
-          ...(receiptAutoIncrement && {
-            receipt_number: nextReceiptNumber,
-          }),
-          deposit_account_id: parseInt(preferredDepositAccount),
-          entries: orderingLinesIndexes(defaultReceipt.entries),
-          currency_code: baseCurrency,
-          receipt_message: receiptMessage,
-          terms_conditions: receiptTermsConditions,
-          pdf_template_id: saleReceiptState?.defaultTemplateId,
+  const initialValues: ReceiptFormValues = !isEmpty(receipt)
+    ? transformToEditForm(receipt)
+    : {
+        ...defaultReceipt,
+        ...(receiptAutoIncrement && {
+          receiptNumber: nextReceiptNumber,
         }),
-  };
+        depositAccountId: parseInt(preferredDepositAccount ?? ''),
+        entries: orderingLinesIndexes(defaultReceipt.entries),
+        currencyCode: baseCurrency ?? '',
+        receiptMessage: receiptMessage ?? '',
+        termsConditions: receiptTermsConditions ?? '',
+        pdfTemplateId: saleReceiptState?.defaultTemplateId ?? '',
+      };
   // Handle the form submit.
   const handleFormSubmit = (
-    values,
-    { setErrors, setSubmitting, resetForm },
+    values: ReceiptFormValues,
+    { setErrors, setSubmitting, resetForm }: FormikHelpers<ReceiptFormValues>,
   ) => {
     const entries = values.entries.filter(
-      (item) => item.item_id && item.quantity,
+      (item) => item.itemId && item.quantity,
     );
-    const totalQuantity = sumBy(entries, (entry) => parseInt(entry.quantity));
+    const totalQuantity = sumBy(entries, (entry) =>
+      parseInt(String(entry.quantity)),
+    );
 
     if (totalQuantity === 0) {
       AppToaster.show({
@@ -107,37 +111,41 @@ function ReceiptFormRoot({
     }
     const form = {
       ...transformFormValuesToRequest(values),
-      closed: submitPayload.status,
+      closed: !!submitPayload?.status,
     };
     // Handle the request success.
-    const onSuccess = (response) => {
+    const onSuccess = () => {
       AppToaster.show({
         message: intl.get(
           isNewMode
             ? 'the_receipt_has_been_created_successfully'
             : 'the_receipt_has_been_edited_successfully',
-          { number: values.receipt_number },
+          { number: values.receiptNumber },
         ),
         intent: Intent.SUCCESS,
       });
       setSubmitting(false);
 
-      if (submitPayload.redirect) {
+      if (submitPayload?.redirect) {
         history.push('/receipts');
       }
-      if (submitPayload.resetForm) {
-        resetFormState();
+      if (submitPayload?.resetForm) {
+        resetFormState({ resetForm, initialValues, values });
       }
     };
 
     // Handle the request error.
-    const onError = ({ data: { errors } }) => {
+    const onError = ({
+      data: { errors },
+    }: {
+      data: { errors: Array<{ type: string }> };
+    }) => {
       if (errors) {
         handleErrors(errors, { setErrors });
       }
       setSubmitting(false);
     };
-    if (!isNewMode) {
+    if (!isNewMode && receipt) {
       editReceiptMutate([receipt.id, form]).then(onSuccess).catch(onError);
     } else {
       createReceiptMutate(form).then(onSuccess).catch(onError);
@@ -145,7 +153,7 @@ function ReceiptFormRoot({
   };
 
   return (
-    <Formik
+    <Formik<ReceiptFormValues>
       validationSchema={
         isNewMode ? CreateReceiptFormSchema : EditReceiptFormSchema
       }

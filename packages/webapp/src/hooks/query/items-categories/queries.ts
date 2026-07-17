@@ -1,26 +1,26 @@
 import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  UseMutationOptions,
-  UseQueryOptions,
-} from '@tanstack/react-query';
-import type {
-  ItemCategory,
-  ItemCategoriesListResponse,
-  ItemsCategoriesListResult,
-  CreateItemCategoryBody,
-  EditItemCategoryBody,
-} from '@bigcapital/sdk-ts';
-import {
   fetchItemCategories,
   fetchItemCategory,
   createItemCategory,
   editItemCategory,
   deleteItemCategory,
 } from '@bigcapital/sdk-ts';
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  UseMutationOptions,
+  UseQueryOptions,
+} from '@tanstack/react-query';
 import { useApiFetcher } from '../../useRequest';
 import { itemsCategoriesKeys } from './query-keys';
+import type {
+  ItemCategory,
+  ItemCategoriesListResponse,
+  CreateItemCategoryBody,
+  EditItemCategoryBody,
+  GetItemCategoriesQuery,
+} from '@bigcapital/sdk-ts';
 
 const commonInvalidateQueries = (
   queryClient: ReturnType<typeof useQueryClient>,
@@ -80,7 +80,7 @@ export function useDeleteItemCategory(
 }
 
 export function useItemsCategories(
-  query?: Record<string, unknown>,
+  query?: GetItemCategoriesQuery,
   props?: Omit<
     UseQueryOptions<
       ItemCategoriesListResponse,
@@ -90,7 +90,7 @@ export function useItemsCategories(
     'queryKey' | 'queryFn' | 'select'
   >,
 ) {
-  const fetcher = useApiFetcher();
+  const fetcher = useApiFetcher({ enableCamelCaseTransform: true });
   return useQuery<
     ItemCategoriesListResponse,
     Error,
@@ -98,7 +98,7 @@ export function useItemsCategories(
   >({
     ...props,
     queryKey: [...itemsCategoriesKeys.all(), query],
-    queryFn: () => fetchItemCategories(fetcher),
+    queryFn: () => fetchItemCategories(fetcher, query),
   });
 }
 

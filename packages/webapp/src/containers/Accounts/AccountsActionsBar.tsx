@@ -1,5 +1,3 @@
-import React from 'react';
-import { isEmpty } from 'lodash';
 import {
   Button,
   NavbarGroup,
@@ -9,6 +7,18 @@ import {
   Switch,
   Alignment,
 } from '@blueprintjs/core';
+import { isEmpty } from 'lodash';
+import React from 'react';
+import { useHistory } from 'react-router-dom';
+import { useAccountsChartContext } from './AccountsChartProvider';
+import { useBulkDeleteAccountsDialog } from './hooks/use-bulk-delete-accounts-dialog';
+import { withAccounts } from './withAccounts';
+import { withAccountsTableActions } from './withAccountsTableActions';
+import type { WithAccountsProps } from './withAccounts';
+import type { WithAccountsTableActionsProps } from './withAccountsTableActions';
+import type { WithAlertActionsProps } from '@/containers/Alert/withAlertActions';
+import type { WithDialogActionsProps } from '@/containers/Dialog/withDialogActions';
+import type { WithSettingsActionsProps } from '@/containers/Settings/withSettingsActions';
 import {
   AdvancedFilterPopover,
   Can,
@@ -21,23 +31,13 @@ import {
 } from '@/components';
 import { AccountAction, AbilitySubject } from '@/constants/abilityOption';
 import { DialogsName } from '@/constants/dialogs';
-import { useHistory } from 'react-router-dom';
-import { useRefreshAccounts } from '@/hooks/query/accounts';
-import { useAccountsChartContext } from './AccountsChartProvider';
-import { useDownloadExportPdf } from '@/hooks/query/FinancialReports/use-export-pdf';
-import { useBulkDeleteAccountsDialog } from './hooks/use-bulk-delete-accounts-dialog';
-import { withAccounts } from './withAccounts';
-import { withAccountsTableActions } from './withAccountsTableActions';
-import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { withAlertActions } from '@/containers/Alert/withAlertActions';
+import { withDialogActions } from '@/containers/Dialog/withDialogActions';
 import { withSettings } from '@/containers/Settings/withSettings';
 import { withSettingsActions } from '@/containers/Settings/withSettingsActions';
-import type { WithAccountsProps } from './withAccounts';
-import type { WithAccountsTableActionsProps } from './withAccountsTableActions';
-import type { WithDialogActionsProps } from '@/containers/Dialog/withDialogActions';
-import type { WithAlertActionsProps } from '@/containers/Alert/withAlertActions';
-import type { WithSettingsActionsProps } from '@/containers/Settings/withSettingsActions';
-
+import { useRefreshAccounts } from '@/hooks/query/accounts';
+import { useDownloadExportPdf } from '@/hooks/query/FinancialReports/use-export-pdf';
+import type { IFilterRole } from '@/components/AdvancedFilter/interfaces';
 import { compose } from '@/utils';
 
 interface AccountsActionsBarInnerProps {
@@ -47,7 +47,7 @@ interface AccountsActionsBarInnerProps {
   setAccountsTableState: WithAccountsTableActionsProps['setAccountsTableState'];
   accountsSelectedRows: WithAccountsProps['accountsSelectedRows'];
   accountsInactiveMode: boolean | undefined;
-  accountsFilterConditions: unknown[];
+  accountsFilterConditions: IFilterRole[];
   accountsTableSize: unknown;
 }
 
@@ -181,7 +181,7 @@ function AccountsActionsBarInner({
             conditions: accountsFilterConditions,
             defaultFieldKey: 'name',
             fields: fields,
-            onFilterChange: (filterConditions: unknown[]) => {
+            onFilterChange: (filterConditions: IFilterRole[]) => {
               setAccountsTableState({ filterRoles: filterConditions });
             },
           }}

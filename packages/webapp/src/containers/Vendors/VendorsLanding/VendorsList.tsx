@@ -3,16 +3,13 @@ import React, { useEffect } from 'react';
 
 import '@/style/pages/Vendors/List.scss';
 
-import { DashboardPageContent } from '@/components';
-
-import { VendorsListProvider } from './VendorsListProvider';
-import { VendorsListDialogs } from './VendorsListDialogs';
 import { VendorActionsBar } from './VendorActionsBar';
+import { VendorsListDialogs } from './VendorsListDialogs';
+import { VendorsListProvider } from './VendorsListProvider';
 import { VendorsTable } from './VendorsTable';
-
 import { withVendors } from './withVendors';
 import { withVendorsActions } from './withVendorsActions';
-
+import { DashboardPageContent } from '@/components';
 import { compose } from '@/utils';
 
 /**

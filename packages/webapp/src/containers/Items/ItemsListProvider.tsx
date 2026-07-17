@@ -1,12 +1,12 @@
-import React, { createContext } from 'react';
 import { isEmpty } from 'lodash';
+import React, { createContext } from 'react';
+import { transformItemsTableState } from './utils';
+import { DashboardInsider } from '@/components';
+import { useResourceViews, useResourceMeta, useItems } from '@/hooks/query';
 import {
   getFieldsFromResourceMeta,
   transformTableQueryToParams,
 } from '@/utils';
-import { transformItemsTableState } from './utils';
-import { DashboardInsider } from '@/components';
-import { useResourceViews, useResourceMeta, useItems } from '@/hooks/query';
 
 type UseItemsResult = ReturnType<typeof useItems>;
 type UseResourceViewsResult = ReturnType<typeof useResourceViews>;
@@ -63,12 +63,9 @@ function ItemsListProvider({
     data: itemsData,
     isFetching: isItemsFetching,
     isLoading: isItemsLoading,
-  } = useItems(
-    {
-      ...(transformTableQueryToParams(tableQuery) as Record<string, unknown>),
-    },
-    { keepPreviousData: true } as any,
-  );
+  } = useItems({
+    ...(transformTableQueryToParams(tableQuery) as Record<string, unknown>),
+  });
 
   // Detarmines the datatable empty status.
   const isEmptyStatus =

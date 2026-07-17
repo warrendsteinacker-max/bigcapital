@@ -1,6 +1,3 @@
-// @ts-nocheck
-import React from 'react';
-import { useHistory } from 'react-router-dom';
 import {
   Button,
   Classes,
@@ -8,6 +5,12 @@ import {
   NavbarGroup,
   Alignment,
 } from '@blueprintjs/core';
+import React from 'react';
+import { useHistory } from 'react-router-dom';
+import { useWarehouseTranfersListContext } from './WarehouseTransfersListProvider';
+import { withWarehouseTransfers } from './withWarehouseTransfers';
+import { withWarehouseTransfersActions } from './withWarehouseTransfersActions';
+import type { WithWarehouseTransfersActionsProps } from './withWarehouseTransfersActions';
 import {
   Icon,
   FormattedMessage as T,
@@ -17,14 +20,26 @@ import {
   DashboardActionViewsList,
   DashboardActionsBar,
 } from '@/components';
-
-import { useWarehouseTranfersListContext } from './WarehouseTransfersListProvider';
 import { withSettings } from '@/containers/Settings/withSettings';
+import type { WithSettingsProps } from '@/containers/Settings/withSettings';
 import { withSettingsActions } from '@/containers/Settings/withSettingsActions';
-import { withWarehouseTransfers } from './withWarehouseTransfers';
-import { withWarehouseTransfersActions } from './withWarehouseTransfersActions';
-
+import type { WithSettingsActionsProps } from '@/containers/Settings/withSettingsActions';
+import type { IFilterRole } from '@/components/AdvancedFilter/interfaces';
 import { compose } from '@/utils';
+
+interface WarehouseTransfersActionsBarInnerProps
+  extends Pick<
+    WithWarehouseTransfersActionsProps,
+    'setWarehouseTransferTableState'
+  > {
+  warehouseTransferFilterRoles: IFilterRole[];
+  warehouseTransferTableSize?: unknown;
+  addSetting: WithSettingsActionsProps['addSetting'];
+}
+
+interface ViewOption {
+  slug?: string;
+}
 
 /**
  * Warehouse Transfers actions bar.
@@ -41,7 +56,7 @@ function WarehouseTransfersActionsBarInner({
 
   // #withSettingsActions
   addSetting,
-}) {
+}: WarehouseTransfersActionsBarInnerProps) {
   const history = useHistory();
 
   // credit note list context.
@@ -59,12 +74,12 @@ function WarehouseTransfersActionsBarInner({
   };
 
   // Handle views tab change.
-  const handleTabChange = (view) => {
+  const handleTabChange = (view: ViewOption | null) => {
     setWarehouseTransferTableState({ viewSlug: view ? view.slug : null });
   };
 
   // Handle table row size change.
-  const handleTableRowSizeChange = (size) => {
+  const handleTableRowSizeChange = (size: string) => {
     addSetting('warehouseTransfers', 'tableSize', size);
   };
 
@@ -92,8 +107,10 @@ function WarehouseTransfersActionsBarInner({
             conditions: warehouseTransferFilterRoles,
             defaultFieldKey: 'created_at',
             fields: fields,
-            onFilterChange: (filterConditions) => {
-              setWarehouseTransferTableState({ filterRoles: filterConditions });
+            onFilterChange: (filterConditions: IFilterRole[]) => {
+              setWarehouseTransferTableState({
+                filterRoles: filterConditions,
+              });
             },
           }}
         >
@@ -104,7 +121,7 @@ function WarehouseTransfersActionsBarInner({
 
         <Button
           className={Classes.MINIMAL}
-          icon={<Icon icon={'print-16'} iconSize={'16'} />}
+          icon={<Icon icon={'print-16'} iconSize={16} />}
           text={<T id={'print'} />}
         />
         <Button
@@ -114,7 +131,7 @@ function WarehouseTransfersActionsBarInner({
         />
         <Button
           className={Classes.MINIMAL}
-          icon={<Icon icon={'file-export-16'} iconSize={'16'} />}
+          icon={<Icon icon={'file-export-16'} iconSize={16} />}
           text={<T id={'export'} />}
         />
         <NavbarDivider />
@@ -139,9 +156,10 @@ export const WarehouseTransfersActionsBar = compose(
   withSettingsActions,
   withWarehouseTransfersActions,
   withWarehouseTransfers(({ warehouseTransferTableState }) => ({
-    warehouseTransferFilterRoles: warehouseTransferTableState.filterRoles,
+    warehouseTransferFilterRoles:
+      warehouseTransferTableState?.filterRoles ?? [],
   })),
-  withSettings(({ warehouseTransferSettings }) => ({
+  withSettings(({ warehouseTransferSettings }: WithSettingsProps) => ({
     warehouseTransferTableSize: warehouseTransferSettings?.tableSize,
   })),
 )(WarehouseTransfersActionsBarInner);
